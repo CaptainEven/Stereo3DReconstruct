@@ -67,13 +67,13 @@ def distort_pt2d(fx, fy, cx, cy, k1, k2, pt2d):
     """
     pt2d = np.array(pt2d, dtype=np.float32).squeeze()
     assert pt2d.size == 2
-    u, v = pt2d
+    u, v = pt2d  # 相机坐标系下归一化坐标
 
     # compute r^2 and r^4
     r_square = (u * u) + (v * v)
     r_quadric = r_square * r_square
 
-    # do radial un-distortion only
+    # do radial distortion only
     uc = u * (1.0 + k1 * r_square + k2 * r_quadric)
     vc = v * (1.0 + k1 * r_square + k2 * r_quadric)
 
