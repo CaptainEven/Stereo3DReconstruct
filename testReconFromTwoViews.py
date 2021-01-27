@@ -237,9 +237,15 @@ def reproj_err_my(P, pt3d, pt2d, distort_coefs=[]):
 
         x3d = pt3d.squeeze()
         x3d = x3d[:-1].reshape(3, 1)
-        x_cam = np.dot(R, x3d) + T.reshape(3, 1)  # 世界坐标系 ——> 相机坐标系
-        x_norm = np.array([x_cam[0] / x_cam[2], x_cam[1] / x_cam[2]], dtype=np.float32)  # 相机坐标系下归一化坐标
-        pt2d_my = distort_pt2d(fx, fy, cx, cy, k1, k2, x_norm)  # 畸变操作
+
+        # 世界坐标系 ——> 相机坐标系
+        x_cam = np.dot(R, x3d) + T.reshape(3, 1)
+
+        # 相机坐标系下归一化坐标
+        x_norm = np.array([x_cam[0] / x_cam[2], x_cam[1] / x_cam[2]], dtype=np.float32)
+
+        # 畸变操作
+        pt2d_my = distort_pt2d(fx, fy, cx, cy, k1, k2, x_norm)
         pt2d_my = pt2d_my.squeeze()
 
     return np.mean(np.abs(pt2d_my - pt2d))
