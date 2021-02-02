@@ -292,9 +292,17 @@ def my_reproj_err(K, R, T, pt3d, pt2d, distort_coefs=[]):
 
         x3d = pt3d.squeeze()
         x3d = x3d[:-1].reshape(3, 1)
-        x_cam = np.dot(R, x3d) + T.reshape(3, 1)  # 世界坐标系 ——> 相机坐标系
-        x_norm = np.array([x_cam[0] / x_cam[2], x_cam[1] / x_cam[2]], dtype=np.float32)  # 相机坐标系下归一化坐标
-        pt2d_my = distort_pt2d(fx, fy, cx, cy, k1, k2, x_norm)  # 畸变操作
+
+        # 世界坐标系 ——> 相机坐标系
+        x_cam = np.dot(R, x3d) + T.reshape(3, 1)
+
+        # 相机坐标系下归一化坐标
+        x_norm = np.array([x_cam[0] / x_cam[2], x_cam[1] / x_cam[2]], dtype=np.float32)
+
+        # 畸变操作
+        pt2d_my = distort_pt2d(fx, fy, cx, cy, k1, k2, x_norm)
+
+        # 格式化
         pt2d_my = pt2d_my.squeeze()
 
     return np.mean(np.abs(pt2d_my - pt2d))
@@ -1044,7 +1052,7 @@ def test_pose_from_feature_matching_for_bino():
     # print('Mean eigenvalue: {:.3f}'.format(mean_eigenvalue))
     E = np.dot(U, np.dot(np.diag([1.0, 1.0, 0]), V))  # S = [1, 1, 0]
     # E = np.dot(U, np.dot(np.diag([mean_eigenvalue, mean_eigenvalue, 0]), V))  # S = [1, 1, 0]
-    print('E:\n', E)
+    # print('E:\n', E)
 
     # 创建矩阵(Hartley)
     W = np.array([[0, -1, 0],
@@ -1107,7 +1115,8 @@ def test_pose_from_feature_matching_for_bino():
     R, T = np.float32(R), np.float32(T)
 
     # 验证位姿——E = t^R*scale
-    E_estimate = np.dot(skew(T), R) * -1.0
+    E_estimate = np.dot(skew(T), R)
+    print('Original E:\n', E)
     print('E from t^R:\n', E_estimate)
 
     # 验证位姿——对极约束: 计算对极约束残差
@@ -1167,9 +1176,9 @@ def test_pose_from_feature_matching_for_bino():
     print('Mean re-projection error(my): {:6.4} pixel'.format(err_sum_my / float(len(pts3d))))
     print('Mean re-projection error(cv): {:6.4} pixel\n'.format(err_sum_cv / float(len(pts3d))))
 
-    # 用新的位姿进行三维重建...
-    pts3d = np.array(pts3d)[:, :-1]
+    # ---------- 尝试BA优化
 
+    pts3d = np.array(pts3d)[:, :-1]
     return pts3d, p1, p2
 
 
@@ -1177,5 +1186,5 @@ if __name__ == '__main__':
     # bino_recon()
     # twoviews_recon()
     # test_verify_P1P2()
-    compare_two_recon_methods()
-    # test_pose_from_feature_matching_for_bino()
+    # compare_two_recon_methods()
+    test_pose_from_feature_matching_for_bino()
