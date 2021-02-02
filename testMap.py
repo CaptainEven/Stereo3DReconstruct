@@ -61,20 +61,28 @@ while True:
     # print('Block size: ', block_size)
 
     # 根据Block Matching方法生成视差图(opencv里也提供了SGBM/Semi-Global Block Matching算法)
-    # stereo = cv2.StereoBM_create(numDisparities=16 * num, blockSize=block_size)
-    stereo = cv2.StereoSGBM_create(numDisparities=32 * num, blockSize=block_size)
+    num_disp = 16 * num
+    num_disp = ((imgL.shape[1] // 8) + 15) & -16;
+    stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=block_size)
+    # stereo = cv2.StereoSGBM_create(numDisparities=32 * num, blockSize=block_size)
     disparity = stereo.compute(imgL, imgR)
     disp = cv2.normalize(disparity, disparity, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
 
-    # 将图片扩展至3d空间中，其z方向的值则为当前的距离
-    threeD = cv2.reprojectImageTo3D(disparity.astype(np.float32) / 16.0, camera_configs.Q)
+    # ----- 将图片扩展至3d空间中，其z方向的值则为当前的距离
+    # 生成3D点云
+    threeD = cv2.reprojectImageTo3D(disparity.astype(np.float32), camera_configs.Q)
     # print(threeD)
     inds = np.where(threeD[:, :, 2] > 0)
     good_threeD = threeD[inds]
-    num_pts = good_threeD.shape[0]
+
+    # 单位转换：mm ——> m
+    pts3d = good_threeD * 0.001
+
+    # ----- 测距: 随机输出一些距离
+    num_pts = pts3d.shape[0]
     rand_pt_inds = [np.random.randint(int(0.3*num_pts), int(0.7*num_pts)) for i in range(5)]
-    dists = good_threeD[rand_pt_inds][:, 2]
-    print('Measured distance: {:.5f}m'.format(dists[np.random.randint(0, 5)] * 0.001))
+    dists = pts3d[rand_pt_inds][:, 2]
+    print('Measured distance: {:.5f}m'.format(dists[np.random.randint(0, 5)]))
 
     cv2.imshow("pic1", img1_rectified)
     cv2.imshow("pic2", img2_rectified)
