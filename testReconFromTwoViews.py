@@ -4,6 +4,8 @@ import cv2
 import math
 import numpy as np
 import camera_configs
+from scipy.sparse import lil_matrix
+from scipy.optimize import least_squares
 
 
 # # 读取原图
@@ -267,7 +269,7 @@ def my_reproj_err(K, R, T, pt3d, pt2d, distort_coefs=[]):
     T = np.float32(T)
     P = np.zeros((3, 4), dtype=np.float32)
     P[:3, :3] = R
-    P[:, 3] = T.T
+    P[:, 3] = T.squeeze()
     P = np.dot(K, P)
 
     # 齐次坐标
@@ -282,7 +284,7 @@ def my_reproj_err(K, R, T, pt3d, pt2d, distort_coefs=[]):
 
     # ---------- 获取重投影坐标λx = PX = K[R|T]X
     if len(distort_coefs) == 0:  # 如果不考虑畸变: 直接矩阵乘法
-        pt_homo = P.dot(np.array(pt3d))
+        pt_homo = np.dot(P, pt3d)
         pt2d_my = pt_homo / pt_homo[2]
         pt2d_my = pt2d_my[:-1]
     else:  # 考虑畸变的影响
@@ -1084,8 +1086,8 @@ def test_pose_from_feature_matching_for_bino():
     # print(P2)
 
     poses = [
-        (np.dot(U, np.dot(W, V)), U[:, 2]),    # pose 0
-        (np.dot(U, np.dot(W, V)), -U[:, 2]),   # pose 1
+        (np.dot(U, np.dot(W, V)), U[:, 2]),  # pose 0
+        (np.dot(U, np.dot(W, V)), -U[:, 2]),  # pose 1
         (np.dot(U, np.dot(W.T, V)), U[:, 2]),  # pose 2
         (np.dot(U, np.dot(W.T, V)), -U[:, 2])  # pose 3
     ]
@@ -1108,6 +1110,7 @@ def test_pose_from_feature_matching_for_bino():
             max_res = sum_res
             ind = i
             in_front_inds = (depth_1 > 0.0) & (depth_2 > 0.0)
+
     print('The id {:d} pose is the correct pose.'.format(ind))
 
     # 获取位姿
@@ -1129,22 +1132,25 @@ def test_pose_from_feature_matching_for_bino():
     print('Estimated T:\n', T)
 
     # ---------- 计算正确的位姿[R|T]下的三角剖分
+    # 计算相机投影矩阵
     P2_correct = P2[ind]
     P1 = np.dot(K1, P1)
     P2 = np.dot(K2, P2_correct)
-    pts3d, pts3d_homo = my_triangulate(P1, P2, x1, x2)
 
-    # pts3d_homo = cv2.triangulatePoints(P1, P2, p1.T, p2.T)  # 返回4×N
-    # pts3d = []
-    # for i in range(pts3d_homo.shape[1]):  # 列数表示计算出来空间点的个数 将三角化的结果进行处理得到“正常”的点坐标
-    #     col = pts3d_homo[:, i]
-    #     col = col / float(col[3])
-    #     pts3d.append([col[0], col[1], col[2]])
-    # pts3d = np.array(pts3d, dtype=np.float32)
+    # 三角剖分
+    # pts3d, pts3d_homo = my_triangulate(P1, P2, x1, x2)
 
-    # pts3d *= 10.0
-    # pts3d_homo *= 10.0
+    pts3d_homo = cv2.triangulatePoints(P1, P2, p1.T, p2.T)  # 返回4×N
+    pts3d = []
+    for i in range(pts3d_homo.shape[1]):  # 列数表示计算出来空间点的个数 将三角化的结果进行处理得到“正常”的点坐标
+        col = pts3d_homo[:, i]
+        col = col / float(col[3])
+        pts3d.append([col[0], col[1], col[2]])
+
+    pts3d = np.array(pts3d, dtype=np.float32)
     pts3d = pts3d[in_front_inds, :]
+    p1 = p1[in_front_inds, :]
+    p2 = p2[in_front_inds, :]
     print('Total {:d} 3D points in front of both cameras.'.format(pts3d.shape[0]))
     print(pts3d[:5])
 
@@ -1153,38 +1159,171 @@ def test_pose_from_feature_matching_for_bino():
     R1 = np.eye(3, dtype=np.float32)
     T1 = np.zeros((3, 1), dtype=np.float32)
     R2, T2 = poses[ind]
+
     # pts3d = pts3d.tolist()
-    err_sum_my, err_sum_cv = 0.0, 0.0
+
+    # err_sum_my = 0.0
+    err_sum_cv = 0.0
     for pt2d_1, pt2d_2, pt3d in zip(p1, p2, pts3d):
         ## ----- left frame's re-projection error
-        err_my_1 = my_reproj_err(K1, R1, T1, pt3d, pt2d_1)
+        # err_my_1 = my_reproj_err(K1, R1, T1, pt3d, pt2d_1)
         err_cv_1 = cv_reproj_err(K1, R1, T1, pt3d, pt2d_1)
 
         ## ----- right frame's re-projection error
-        err_my_2 = my_reproj_err(K2, R2, T2, pt3d, pt2d_2)
+        # err_my_2 = my_reproj_err(K2, R2, T2, pt3d, pt2d_2)
         err_cv_2 = cv_reproj_err(K2, R2, T2, pt3d, pt2d_2)
 
-        err_mean_my = np.mean(np.array([err_my_1, err_my_2]))
+        # err_mean_my = np.mean(np.array([err_my_1, err_my_2]))
         err_mean_cv = np.mean(np.array([err_cv_1, err_cv_2]))
 
         # print('Re-projection error(my): {:6.4f} pixel'.format(err_mean_my))
         # print('Re-projection error(cv): {:6.4f} pixel\n'.format(err_mean_cv))
 
-        err_sum_my += err_mean_my
+        # err_sum_my += err_mean_my
         err_sum_cv += err_mean_cv
 
-    print('Mean re-projection error(my): {:6.4} pixel'.format(err_sum_my / float(len(pts3d))))
+    # print('Mean re-projection error(my): {:6.4} pixel'.format(err_sum_my / float(len(pts3d))))
     print('Mean re-projection error(cv): {:6.4} pixel\n'.format(err_sum_cv / float(len(pts3d))))
 
-    # ---------- 尝试BA优化
+    def func(all_params, n_pts, pts2d_2views, K_2views):
+        """
+        :param all_params:
+        :param n_pts:
+        :param pts2d_2views:
+        :param K_2views:
+        :return:
+        """
+        rots = all_params[:2 * 3].reshape((2, 3))  # 读取2个旋转向量
+        mots = all_params[2 * 3: 2 * 6].reshape((2, 3))  # 读取2个平移向量
+        pts3d = all_params[2 * 6:].reshape((n_pts, 3))  # 读取n_pts个空间点
 
-    pts3d = np.array(pts3d)[:, :-1]
-    return pts3d, p1, p2
+        errs = []
+        for view_i in range(2):  # residual error for 2 views
+            rot = rots[view_i]
+            mot = mots[view_i]
+
+            for pt_j in range(n_pts):
+                obj_p = pts3d[pt_j]
+                img_p = pts2d_2views[view_i][pt_j]
+
+                ## ---------- 3D ——> 2D
+                est_p, J = cv2.projectPoints(obj_p, rot, mot, K_2views[view_i], np.array([]))
+                est_p = est_p.reshape(2)
+
+                # 观测 - 预测
+                err = img_p - est_p
+                errs.append(err[0])
+                errs.append(err[1])
+
+        return np.array(errs)
+
+    def bundle_adjustment_sparsity(n_pts):
+        """
+        :param n_pts: n_obs = n_pts * 2(2 views)
+        :return:
+        """
+        n_obs = n_pts * 2  # number of 2D-3D mappings(observations): 2 views
+        m = n_obs * 2  # rows number: n_observations(mappings: 2 views here) * 2(x, y)
+        n = 2 * 6 + n_pts * 3  # cols number:
+        A = lil_matrix((m, n), dtype=np.int)
+
+        # observations from 2 views
+        obs_inds = np.arange(n_obs)
+
+        # 3d pt index for each observation(2d feature point mapping to 3d point)
+        pt3d_inds = np.zeros(n_obs, dtype=np.int)
+        pt3d_inds[:n_pts] = np.arange(n_pts)
+        pt3d_inds[n_pts: n_pts*2] = np.arange(n_pts)
+
+        # view id for each pt2d feature point
+        pt2d_view_inds = np.zeros(n_obs, dtype=np.int)
+        pt2d_view_inds[:n_pts] = 0
+        pt2d_view_inds[n_pts: n_pts * 2] = 1
+        for i in range(6):  # camera pose: rotations and translations
+            A[2 * obs_inds, pt2d_view_inds * 6 + i] = 1         # x row
+            A[2 * obs_inds + 1, pt2d_view_inds * 6 + i] = 1     # y row
+
+        for i in range(3):  # 3D points
+            A[2 * obs_inds, 2 * 6 + pt3d_inds * 3 + i] = 1       # x row
+            A[2 * obs_inds + 1, 2 * 6 + pt3d_inds * 3 + i] = 1   # y row
+
+        return A
+
+    # ---------- 尝试BA优化: 只优化空间点和位姿
+    # 构建参数集合
+    rot_vects = np.zeros((2, 3), dtype=np.float32)
+    mot_vects = np.zeros((2, 3), dtype=np.float32)
+    r1, _ = cv2.Rodrigues(R1)
+    r2, _ = cv2.Rodrigues(R2)
+    r1, r2 = r1.squeeze(), r2.squeeze()
+    rot_vects[0] = r1
+    rot_vects[1] = r2
+    mot_vects[0] = T1.squeeze()
+    mot_vects[1] = T2.squeeze()
+    all_params = np.hstack((rot_vects.ravel(), mot_vects.ravel(), pts3d.ravel()))
+
+    # 构建Jacob稀疏矩阵
+    n_pts = pts3d.shape[0]
+    A = bundle_adjustment_sparsity(n_pts)
+
+    # 最小二乘优化
+    pts2d_2views = []
+    pts2d_2views.append(p1)
+    pts2d_2views.append(p2)
+    K_2views = []
+    K_2views.append(np.array(K1, dtype=np.float32))
+    K_2views.append(np.array(K2, dtype=np.float32))
+    res = least_squares(func,
+                        all_params,
+                        jac_sparsity=A,  # A
+                        verbose=2,
+                        x_scale='jac', method='trf', loss='linear',
+                        args=(n_pts, pts2d_2views, K_2views))
+
+    # 更新相机位姿和空间点坐标
+    new_params = res.x
+    rots_ = new_params[:2*3].reshape((2, 3))
+    mots_ = new_params[2*3:2*6].reshape((2, 3))
+    pts3d_ = new_params[2*6:].reshape((-1, 3))
+    R1_, _ = cv2.Rodrigues(rots_[0])  # 旋转向量 ——> 旋转矩阵
+    R2_, _ = cv2.Rodrigues(rots_[1])
+    T1_ = mots_[0]
+    T2_ = mots_[1]
+    # ----------
+
+    # 重新计算重投影误差
+    # err_sum_my = 0.0
+    err_sum_cv = 0.0
+    for pt2d_1, pt2d_2, pt3d in zip(p1, p2, pts3d_):
+        ## ----- left frame's re-projection error
+        # err_my_1 = my_reproj_err(K1, R1_, T1_, pt3d, pt2d_1)
+        err_cv_1 = cv_reproj_err(K1, R1_, T1_, pt3d, pt2d_1)
+
+        ## ----- right frame's re-projection error
+        # err_my_2 = my_reproj_err(K2, R2_, T2_, pt3d, pt2d_2)
+        err_cv_2 = cv_reproj_err(K2, R2_, T2_, pt3d, pt2d_2)
+
+        # err_mean_my = np.mean(np.array([err_my_1, err_my_2]))
+        err_mean_cv = np.mean(np.array([err_cv_1, err_cv_2]))
+
+        # print('Re-projection error(my): {:6.4f} pixel'.format(err_mean_my))
+        # print('Re-projection error(cv): {:6.4f} pixel\n'.format(err_mean_cv))
+
+        # err_sum_my += err_mean_my
+        err_sum_cv += err_mean_cv
+
+    # print('Mean re-projection error(my): {:6.4} pixel'.format(err_sum_my / float(len(pts3d))))
+    print('Mean re-projection error(cv): {:6.4} pixel\n'.format(err_sum_cv / float(len(pts3d))))
+
+    pts3d_ = np.array(pts3d_)
+    pts3d_ *= 0.001
+    print(pts3d_[:15])
+    return pts3d_, p1, p2
 
 
 if __name__ == '__main__':
     # bino_recon()
     # twoviews_recon()
     # test_verify_P1P2()
-    # compare_two_recon_methods()
-    test_pose_from_feature_matching_for_bino()
+    compare_two_recon_methods()
+    # test_pose_from_feature_matching_for_bino()
