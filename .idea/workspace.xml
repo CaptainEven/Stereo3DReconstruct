@@ -98,7 +98,8 @@
       <workItem from="1612314850649" duration="5433000" />
       <workItem from="1612322317616" duration="2471000" />
       <workItem from="1612331675154" duration="1909000" />
-      <workItem from="1612336172881" duration="2740000" />
+      <workItem from="1612336172881" duration="4059000" />
+      <workItem from="1612404302127" duration="3357000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor.">
       <created>1611727451444</created>
@@ -142,7 +143,14 @@
       <option name="project" value="LOCAL" />
       <updated>1612249040295</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Debug pose recover from E matrix.">
+      <created>1612340919676</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1612340919676</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -150,57 +158,58 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Refactor." />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor." />
+    <MESSAGE value="Debug pose recover from E matrix." />
+    <option name="LAST_COMMIT_MESSAGE" value="Debug pose recover from E matrix." />
   </component>
   <component name="WindowStateProjectService">
-    <state x="462" y="96" key="CommitChangelistDialog2" timestamp="1612249035669">
+    <state x="462" y="96" key="CommitChangelistDialog2" timestamp="1612340918759">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="462" y="96" key="CommitChangelistDialog2/0.0.1920.1050@0.0.1920.1050" timestamp="1612249035668" />
+    <state x="462" y="96" key="CommitChangelistDialog2/0.0.1920.1050@0.0.1920.1050" timestamp="1612340918759" />
     <state width="1759" height="466" key="DebuggerActiveHint" timestamp="1612323548573">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
     <state width="1759" height="466" key="DebuggerActiveHint/0.0.1920.1050@0.0.1920.1050" timestamp="1612323548573" />
-    <state width="1282" height="314" key="GridCell.Tab.0.bottom" timestamp="1612338268341">
+    <state width="1282" height="342" key="GridCell.Tab.0.bottom" timestamp="1612407914149">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="314" key="GridCell.Tab.0.bottom/0.0.1920.1050@0.0.1920.1050" timestamp="1612338268341" />
-    <state width="1282" height="314" key="GridCell.Tab.0.center" timestamp="1612338268341">
+    <state width="1282" height="342" key="GridCell.Tab.0.bottom/0.0.1920.1050@0.0.1920.1050" timestamp="1612407914149" />
+    <state width="1282" height="342" key="GridCell.Tab.0.center" timestamp="1612407914148">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="314" key="GridCell.Tab.0.center/0.0.1920.1050@0.0.1920.1050" timestamp="1612338268341" />
-    <state width="1282" height="314" key="GridCell.Tab.0.left" timestamp="1612338268341">
+    <state width="1282" height="342" key="GridCell.Tab.0.center/0.0.1920.1050@0.0.1920.1050" timestamp="1612407914148" />
+    <state width="1282" height="342" key="GridCell.Tab.0.left" timestamp="1612407914148">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="314" key="GridCell.Tab.0.left/0.0.1920.1050@0.0.1920.1050" timestamp="1612338268341" />
-    <state width="1282" height="314" key="GridCell.Tab.0.right" timestamp="1612338268341">
+    <state width="1282" height="342" key="GridCell.Tab.0.left/0.0.1920.1050@0.0.1920.1050" timestamp="1612407914148" />
+    <state width="1282" height="342" key="GridCell.Tab.0.right" timestamp="1612407914148">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="314" key="GridCell.Tab.0.right/0.0.1920.1050@0.0.1920.1050" timestamp="1612338268341" />
-    <state width="1282" height="362" key="GridCell.Tab.1.bottom" timestamp="1612337535380">
+    <state width="1282" height="342" key="GridCell.Tab.0.right/0.0.1920.1050@0.0.1920.1050" timestamp="1612407914148" />
+    <state width="1282" height="530" key="GridCell.Tab.1.bottom" timestamp="1612407903605">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="362" key="GridCell.Tab.1.bottom/0.0.1920.1050@0.0.1920.1050" timestamp="1612337535380" />
-    <state width="1282" height="362" key="GridCell.Tab.1.center" timestamp="1612337535379">
+    <state width="1282" height="530" key="GridCell.Tab.1.bottom/0.0.1920.1050@0.0.1920.1050" timestamp="1612407903605" />
+    <state width="1282" height="530" key="GridCell.Tab.1.center" timestamp="1612407903605">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="362" key="GridCell.Tab.1.center/0.0.1920.1050@0.0.1920.1050" timestamp="1612337535379" />
-    <state width="1282" height="362" key="GridCell.Tab.1.left" timestamp="1612337535379">
+    <state width="1282" height="530" key="GridCell.Tab.1.center/0.0.1920.1050@0.0.1920.1050" timestamp="1612407903605" />
+    <state width="1282" height="530" key="GridCell.Tab.1.left" timestamp="1612407903605">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="362" key="GridCell.Tab.1.left/0.0.1920.1050@0.0.1920.1050" timestamp="1612337535379" />
-    <state width="1282" height="362" key="GridCell.Tab.1.right" timestamp="1612337535379">
+    <state width="1282" height="530" key="GridCell.Tab.1.left/0.0.1920.1050@0.0.1920.1050" timestamp="1612407903605" />
+    <state width="1282" height="530" key="GridCell.Tab.1.right" timestamp="1612407903605">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state width="1282" height="362" key="GridCell.Tab.1.right/0.0.1920.1050@0.0.1920.1050" timestamp="1612337535379" />
+    <state width="1282" height="530" key="GridCell.Tab.1.right/0.0.1920.1050@0.0.1920.1050" timestamp="1612407903605" />
     <state x="367" y="171" key="SettingsEditor" timestamp="1611285738931">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
     <state x="367" y="171" key="SettingsEditor/0.0.1920.1050@0.0.1920.1050" timestamp="1611285738931" />
-    <state x="545" y="264" key="Vcs.Push.Dialog.v2" timestamp="1612249040928">
+    <state x="545" y="264" key="Vcs.Push.Dialog.v2" timestamp="1612340923940">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="545" y="264" key="Vcs.Push.Dialog.v2/0.0.1920.1050@0.0.1920.1050" timestamp="1612249040928" />
+    <state x="545" y="264" key="Vcs.Push.Dialog.v2/0.0.1920.1050@0.0.1920.1050" timestamp="1612340923940" />
     <state x="402" y="278" width="592" height="500" key="find.popup" timestamp="1612247693999">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
@@ -225,14 +234,14 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/testReconFromTwoViews.py</url>
-          <line>1320</line>
+          <line>1342</line>
           <option name="timeStamp" value="10" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Stereo3DReconstruct$testReconFromTwoViews.coverage" NAME="testReconFromTwoViews Coverage Results" MODIFIED="1612338268333" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Stereo3DReconstruct$testReconFromTwoViews.coverage" NAME="testReconFromTwoViews Coverage Results" MODIFIED="1612407931948" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/Stereo3DReconstruct$testMap.coverage" NAME="testMap Coverage Results" MODIFIED="1612231415350" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
