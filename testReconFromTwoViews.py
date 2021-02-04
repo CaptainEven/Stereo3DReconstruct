@@ -347,7 +347,7 @@ def cv_reproj_err(K, R, T, pt3d, pt2d, distort_coefs=[]):
     pt2d_my, Jacob = cv2.projectPoints(pt3d, r_vec, T, K, distort_coefs)  # 进行重投影的时候为什么要考虑畸变?
     pt2d_my = np.squeeze(pt2d_my)
 
-    return np.mean(np.abs(pt2d_my - pt2d))
+    return np.mean(np.abs(pt2d_my - pt2d))  # 取绝对值
 
 
 def reconFrom2Views(K1, K2, R1, T1, R2, T2, p1, p2):
@@ -428,7 +428,8 @@ def twoviews_recon():
         dst_pts = np.float32([kpts2[m.trainIdx].pt for m in valid_matches])
 
         # RANSAC随机采样一致
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        # M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        M, mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.RANSAC)
 
         # 将mask变成一维数组
         mask = mask.ravel().tolist()
@@ -667,7 +668,8 @@ def my_recon_bino():
         dst_pts = np.float32([kpts2[m.trainIdx].pt for m in valid_matches])
 
         # RANSAC随机采样一致
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        # M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        M, mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.RANSAC)
 
         # 将mask变成一维数组
         mask = mask.ravel().tolist()
@@ -778,7 +780,8 @@ def bino_recon():
         dst_pts = np.float32([kpts2[m.trainIdx].pt for m in valid_matches])
 
         # RANSAC随机采样一致
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        # M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        M, mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.RANSAC)
 
         # 将mask变成一维数组
         mask = mask.ravel().tolist()
@@ -984,22 +987,23 @@ def test_pose_from_feature_matching_for_bino():
     matches = bf.knnMatch(descriptors1, descriptors2, k=2)
     matches_recip = bf.knnMatch(descriptors2, descriptors1, k=2)
 
+    # 比例滤波器
     def ratio_test(matches):
         """
         :param matches:
         :return:
         """
-        # Ratio test filter: 设置两距离比值小于0.7时为可用匹配(Lowe's ratio test)
         valid_matches = []
         for first, second in matches:  # top1 and top2
             if first.distance < 0.7 * second.distance:
                 valid_matches.append(first)
         return  valid_matches
 
+    # ----- Ratio test filter: 设置两距离比值小于0.7时为可用匹配(Lowe's ratio test)
     valid_matches = ratio_test(matches)
     valid_matches_rcp = ratio_test(matches_recip)
 
-    # Reciprocity filter: 互惠滤波器滤波
+    # ----- Reciprocity filter: 互惠滤波器滤波
     matches_rcp_filter = []
     for match_rcp in valid_matches_rcp:
         found = False
@@ -1013,6 +1017,7 @@ def test_pose_from_feature_matching_for_bino():
             continue
     valid_matches = matches_rcp_filter
 
+    # ----- 几何约束滤波
     good_matches = []
     if len(valid_matches) >= 10:
         # 获取匹配出来的点
@@ -1020,7 +1025,8 @@ def test_pose_from_feature_matching_for_bino():
         dst_pts = np.float32([kpts2[m.trainIdx].pt for m in valid_matches])
 
         # RANSAC随机采样一致
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        # M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
+        M, mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.RANSAC)
 
         # 将mask变成一维数组
         mask = mask.ravel().tolist()
@@ -1180,9 +1186,10 @@ def test_pose_from_feature_matching_for_bino():
         ep_res = np.dot(np.dot(np.dot(pt2d_2_homo.T, skew(T)), R), pt2d_1_homo)
         if ep_res < 1e-6:
             good_flags[i] = True
-            print('Epi-polar constraint residual error: {:.6f}'.format(np.abs(np.squeeze(ep_res))))
+            # print('Epi-polar constraint residual error: {:.6f}'.format(np.abs(np.squeeze(ep_res))))
         else:
-            print('Epi-polar constraint residual error is great!')
+            # print('Epi-polar constraint residual error is great!')
+            pass
     good_flags = np.array(good_flags, dtype=np.bool)
 
     # ----- 取符合条件的2d, 3d特征点
@@ -1377,5 +1384,5 @@ if __name__ == '__main__':
     # bino_recon()
     # twoviews_recon()
     # test_verify_P1P2()
-    # compare_two_recon_methods()
-    test_pose_from_feature_matching_for_bino()
+    compare_two_recon_methods()
+    # test_pose_from_feature_matching_for_bino()
