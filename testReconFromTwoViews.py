@@ -1018,7 +1018,6 @@ def test_pose_from_feature_matching_for_bino():
     valid_matches = matches_rcp_filter
 
     # ----- 应用对极几何约束滤波
-    good_matches = []
     if len(valid_matches) >= 10:
         # 获取匹配出来的点
         src_pts = np.float32([kpts1[m.queryIdx].pt for m in valid_matches])
@@ -1031,11 +1030,11 @@ def test_pose_from_feature_matching_for_bino():
         # ----- mask out invalid match
         mask = mask.ravel().tolist()  # 将mask变成一维数组
         good_matches = [match for i, match in enumerate(valid_matches) if mask[i]]
-
+        good_matches = np.array(good_matches)
     else:
         print("not have enough matches!")
+        return
 
-    good_matches = np.array(good_matches)
 
     # # 可视化特征点匹配
     # good_matches = np.expand_dims(good_matches, 0)
