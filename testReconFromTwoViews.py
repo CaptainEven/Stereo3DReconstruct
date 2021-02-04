@@ -985,7 +985,7 @@ def test_pose_from_feature_matching_for_bino():
     # matches = flann.knnMatch(descriptors1, descriptors2, k=2)  # 匹配描述子 返回匹配的两点
     bf = cv2.BFMatcher(cv2.NORM_HAMMING2)  # NORM_L2, NORM_HAMMING, NORM_HAMMING2
     matches = bf.knnMatch(descriptors1, descriptors2, k=2)
-    matches_recip = bf.knnMatch(descriptors2, descriptors1, k=2)
+    matches_rcp = bf.knnMatch(descriptors2, descriptors1, k=2)
 
     # 比例滤波器
     def ratio_test(matches):
@@ -1001,7 +1001,7 @@ def test_pose_from_feature_matching_for_bino():
 
     # ----- Ratio test filter: 设置两距离比值小于0.7时为可用匹配(Lowe's ratio test)
     valid_matches = ratio_test(matches)
-    valid_matches_rcp = ratio_test(matches_recip)
+    valid_matches_rcp = ratio_test(matches_rcp)
 
     # ----- Reciprocity filter: 互惠滤波器滤波
     matches_rcp_filter = []
@@ -1017,7 +1017,7 @@ def test_pose_from_feature_matching_for_bino():
             continue
     valid_matches = matches_rcp_filter
 
-    # ----- 几何约束滤波
+    # ----- 应用对极几何约束滤波
     good_matches = []
     if len(valid_matches) >= 10:
         # 获取匹配出来的点
@@ -1028,13 +1028,9 @@ def test_pose_from_feature_matching_for_bino():
         # M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 100.0)
         M, mask = cv2.findFundamentalMat(src_pts, dst_pts, cv2.RANSAC)
 
-        # 将mask变成一维数组
-        mask = mask.ravel().tolist()
-
-        ## ----- mask out invalid match
-        for match_i, match in enumerate(valid_matches):
-            if mask[match_i] > 0:
-                good_matches.append(match)
+        # ----- mask out invalid match
+        mask = mask.ravel().tolist()  # 将mask变成一维数组
+        good_matches = [match for i, match in enumerate(valid_matches) if mask[i]]
 
     else:
         print("not have enough matches!")
@@ -1082,8 +1078,8 @@ def test_pose_from_feature_matching_for_bino():
 
     mean_eigenvalue = (S[0] + S[1]) * 0.5
     # print('Mean eigenvalue: {:.3f}'.format(mean_eigenvalue))
-    E = np.dot(U, np.dot(np.diag([1.0, 1.0, 0]), V))  # S = [1, 1, 0]
-    # E = np.dot(U, np.dot(np.diag([mean_eigenvalue, mean_eigenvalue, 0]), V))  # S = [1, 1, 0]
+    # E = np.dot(U, np.dot(np.diag([1.0, 1.0, 0]), V))  # S = [1, 1, 0]
+    E = np.dot(U, np.dot(np.diag([mean_eigenvalue, mean_eigenvalue, 0]), V))  # S = [1, 1, 0]
     # print('E:\n', E)
 
     # 创建矩阵(Hartley)
@@ -1180,15 +1176,15 @@ def test_pose_from_feature_matching_for_bino():
     x1_cam = np.array([np.linalg.inv(K1).dot(x.reshape(3, 1)) for x in x1])
     x2_cam = np.array([np.linalg.inv(K2).dot(x.reshape(3, 1)) for x in x2])
 
-    # Epipolar filter: 验证位姿——对极约束: 计算对极约束残差
+    # Epipolar constraint filter: 验证位姿——对极约束: 计算对极约束残差
     good_flags = [False for i in range(p1.shape[0])]
     for i, (pt2d_1_homo, pt2d_2_homo) in enumerate(zip(x1_cam, x2_cam)):
         ep_res = np.dot(np.dot(np.dot(pt2d_2_homo.T, skew(T)), R), pt2d_1_homo)
-        if ep_res < 1e-6:
+        if ep_res < 1e-5:
             good_flags[i] = True
             # print('Epi-polar constraint residual error: {:.6f}'.format(np.abs(np.squeeze(ep_res))))
         else:
-            # print('Epi-polar constraint residual error is great!')
+            print('Epi-polar constraint residual error is great!')
             pass
     good_flags = np.array(good_flags, dtype=np.bool)
 
@@ -1323,7 +1319,7 @@ def test_pose_from_feature_matching_for_bino():
                         all_params,  # 估计参数的初始值1d数组
                         jac_sparsity=A,  # jacob稀疏矩阵
                         verbose=2,
-                        ftol=1e-8, xtol=1e-8,
+                        ftol=1e-9, xtol=1e-9,
                         x_scale='jac', method='trf', loss='linear',
                         args=(n_pts, pts2d_2views, K_2views))  # 残差函数参数
 
@@ -1377,6 +1373,7 @@ def test_pose_from_feature_matching_for_bino():
     pts3d_ = np.array(pts3d_)
     pts3d_ *= 0.001
     print(pts3d_[:15])
+    print('Remain {:d} 3D points.'.format(pts3d_.shape[0]))
     return pts3d_, p1, p2
 
 
@@ -1384,5 +1381,5 @@ if __name__ == '__main__':
     # bino_recon()
     # twoviews_recon()
     # test_verify_P1P2()
-    compare_two_recon_methods()
-    # test_pose_from_feature_matching_for_bino()
+    # compare_two_recon_methods()
+    test_pose_from_feature_matching_for_bino()
