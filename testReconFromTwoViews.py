@@ -1224,7 +1224,7 @@ def test_pose_from_feature_matching_for_bino():
     # print('Mean re-projection error(my): {:6.4} pixel'.format(err_sum_my / float(len(pts3d))))
     print('Mean re-projection error(cv): {:6.4} pixel\n'.format(err_sum_cv / float(len(pts3d))))
 
-    def func(all_params, n_pts, pts2d_2views, K_2views):
+    def res_func(all_params, n_pts, pts2d_2views, K_2views):
         """
         :param all_params:
         :param n_pts:
@@ -1251,8 +1251,8 @@ def test_pose_from_feature_matching_for_bino():
 
                 # 观测 - 预测
                 err = img_p - est_p
-                errs.append(err[0])
-                errs.append(err[1])
+                errs.append(abs(err[0]))
+                errs.append(abs(err[1]))
 
         return np.array(errs)
 
@@ -1312,13 +1312,13 @@ def test_pose_from_feature_matching_for_bino():
     K_2views = []
     K_2views.append(np.array(K1, dtype=np.float32))
     K_2views.append(np.array(K2, dtype=np.float32))
-    res = least_squares(func,
-                        all_params,
-                        jac_sparsity=A,  # A
+    res = least_squares(res_func,  # 残差函数
+                        all_params,  # 估计参数的初始值1d数组
+                        jac_sparsity=A,  # jacob稀疏矩阵
                         verbose=2,
-                        ftol=1e-9, xtol=1e-9,
+                        ftol=1e-8, xtol=1e-8,
                         x_scale='jac', method='trf', loss='linear',
-                        args=(n_pts, pts2d_2views, K_2views))
+                        args=(n_pts, pts2d_2views, K_2views))  # 残差函数参数
 
     # 更新相机位姿和空间点坐标
     new_params = res.x
@@ -1329,6 +1329,18 @@ def test_pose_from_feature_matching_for_bino():
     R2_, _ = cv2.Rodrigues(rots_[1])
     T1_ = mots_[0]
     T2_ = mots_[1]
+    print('R1:\n', R1)
+    print('R1_:\n', R1_)
+
+    print('T1:\n', T1)
+    print('T1_:\n', T1_)
+
+    print('R2:\n', R2)
+    print('R2_:\n', R2_)
+
+    print('T2:\n', T2)
+    print('T2_:\n', T2_)
+
     # ----------
 
     # 重新计算重投影误差
