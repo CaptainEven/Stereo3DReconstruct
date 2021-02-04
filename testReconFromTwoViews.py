@@ -983,7 +983,7 @@ def test_pose_from_feature_matching_for_bino():
     bf = cv2.BFMatcher(cv2.NORM_HAMMING2)  # NORM_L2, NORM_HAMMING, NORM_HAMMING2
     matches = bf.knnMatch(descriptors1, descriptors2, k=2)
 
-    # 设置两距离比值小于0.7时为可用匹配  （Lowe's ratio test）
+    # Ratio test filter: 设置两距离比值小于0.7时为可用匹配  （Lowe's ratio test）
     valid_matches = []
     for m, n in matches:
         if m.distance < 0.7 * n.distance:
@@ -1121,17 +1121,12 @@ def test_pose_from_feature_matching_for_bino():
     E_estimate = np.dot(skew(T), R)
     print('Original E:\n', E)
     print('E from t^R:\n', E_estimate)
-
-    # 验证位姿——对极约束: 计算对极约束残差
-    for pt2d_1_homo, pt2d_2_homo in zip(x1_cam, x2_cam):
-        ep_res = np.dot(np.dot(np.dot(pt2d_2_homo.T, skew(T)), R), pt2d_1_homo)
-        if ep_res < 1e-5:
-            print('Epi-polar constraint residual error: {:.6f}'.format(np.abs(np.squeeze(ep_res))))
-        else:
-            print('Epi-polar constraint residual error is great!')
-
     print('Estimated R:\n', R)
     print('Estimated T:\n', T)
+
+    # ----- 取符合条件的2d特征点: 对应3D点在两个相机前面(深度值>0)
+    p1 = p1[in_front_inds, :]
+    p2 = p2[in_front_inds, :]
 
     # ---------- 计算正确的位姿[R|T]下的三角剖分
     # 构建相机投影矩阵
@@ -1139,11 +1134,8 @@ def test_pose_from_feature_matching_for_bino():
     P1 = np.dot(K1, P1)
     P2 = np.dot(K2, P2_correct)
 
-    # 三角剖分
+    # ----- 三角剖分
     # pts3d, pts3d_homo = my_triangulate(P1, P2, x1, x2)
-
-    p1 = p1[in_front_inds, :]
-    p2 = p2[in_front_inds, :]
     pts3d_homo = cv2.triangulatePoints(P1, P2, p1.T, p2.T)  # 返回4×N
     pts3d = []
     for i in range(pts3d_homo.shape[1]):  # 列数表示计算出来空间点的个数 将三角化的结果进行处理得到"正常"的点坐标
@@ -1151,13 +1143,14 @@ def test_pose_from_feature_matching_for_bino():
         col = col / float(col[3])
         pts3d.append([col[0], col[1], col[2]])
 
+    # ----- 根据对极几何约束过滤掉不符合精度要求的点(2D-3D)
     # 构造相机坐标系下归一化齐次坐标, 归一化到相机归一化坐标系: normalized camera coordinate frame
     x1 = np.concatenate((p1, np.ones((p1.shape[0], 1), dtype=np.float32)), axis=1)
     x2 = np.concatenate((p2, np.ones((p2.shape[0], 1), dtype=np.float32)), axis=1)
     x1_cam = np.array([np.linalg.inv(K1).dot(x.reshape(3, 1)) for x in x1])
     x2_cam = np.array([np.linalg.inv(K2).dot(x.reshape(3, 1)) for x in x2])
 
-    # 验证位姿——对极约束: 计算对极约束残差
+    # Epipolar filter: 验证位姿——对极约束: 计算对极约束残差
     good_flags = [False for i in range(p1.shape[0])]
     for i, (pt2d_1_homo, pt2d_2_homo) in enumerate(zip(x1_cam, x2_cam)):
         ep_res = np.dot(np.dot(np.dot(pt2d_2_homo.T, skew(T)), R), pt2d_1_homo)
@@ -1168,6 +1161,7 @@ def test_pose_from_feature_matching_for_bino():
             print('Epi-polar constraint residual error is great!')
     good_flags = np.array(good_flags, dtype=np.bool)
 
+    # ----- 取符合条件的2d, 3d特征点
     pts3d = np.array(pts3d, dtype=np.float32)[good_flags]
     p1 = p1[good_flags]
     p2 = p2[good_flags]
@@ -1175,7 +1169,7 @@ def test_pose_from_feature_matching_for_bino():
     print('Total {:d} 3D points in front of both cameras.'.format(pts3d.shape[0]))
     print(pts3d[:5])
 
-    # 计算反投影误差...验证三角化点与特征点的重投影关系: 误差太大, BA优化?
+    # 验证三角化点与特征点的重投影关系: 误差太大则使用BA优化
     ## ---------- 验证投影3D ——> 2D
     R1 = np.eye(3, dtype=np.float32)
     T1 = np.zeros((3, 1), dtype=np.float32)
