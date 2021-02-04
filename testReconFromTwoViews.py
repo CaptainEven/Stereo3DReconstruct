@@ -982,12 +982,36 @@ def test_pose_from_feature_matching_for_bino():
     # matches = flann.knnMatch(descriptors1, descriptors2, k=2)  # 匹配描述子 返回匹配的两点
     bf = cv2.BFMatcher(cv2.NORM_HAMMING2)  # NORM_L2, NORM_HAMMING, NORM_HAMMING2
     matches = bf.knnMatch(descriptors1, descriptors2, k=2)
+    matches_recip = bf.knnMatch(descriptors2, descriptors1, k=2)
 
-    # Ratio test filter: 设置两距离比值小于0.7时为可用匹配  （Lowe's ratio test）
-    valid_matches = []
-    for m, n in matches:
-        if m.distance < 0.7 * n.distance:
-            valid_matches.append(m)
+    def ratio_test(matches):
+        """
+        :param matches:
+        :return:
+        """
+        # Ratio test filter: 设置两距离比值小于0.7时为可用匹配(Lowe's ratio test)
+        valid_matches = []
+        for first, second in matches:  # top1 and top2
+            if first.distance < 0.7 * second.distance:
+                valid_matches.append(first)
+        return  valid_matches
+
+    valid_matches = ratio_test(matches)
+    valid_matches_rcp = ratio_test(matches_recip)
+
+    # Reciprocity filter: 互惠滤波器滤波
+    matches_rcp_filter = []
+    for match_rcp in valid_matches_rcp:
+        found = False
+        for match in valid_matches:
+            if match_rcp.queryIdx == match.trainIdx \
+                    and match_rcp.trainIdx == match.queryIdx:
+                matches_rcp_filter.append(match)
+                found = True
+                break
+        if found:
+            continue
+    valid_matches = matches_rcp_filter
 
     good_matches = []
     if len(valid_matches) >= 10:
@@ -1154,7 +1178,7 @@ def test_pose_from_feature_matching_for_bino():
     good_flags = [False for i in range(p1.shape[0])]
     for i, (pt2d_1_homo, pt2d_2_homo) in enumerate(zip(x1_cam, x2_cam)):
         ep_res = np.dot(np.dot(np.dot(pt2d_2_homo.T, skew(T)), R), pt2d_1_homo)
-        if ep_res < 1e-5:
+        if ep_res < 1e-6:
             good_flags[i] = True
             print('Epi-polar constraint residual error: {:.6f}'.format(np.abs(np.squeeze(ep_res))))
         else:
