@@ -63,10 +63,12 @@ while True:
     # 根据Block Matching方法生成视差图(opencv里也提供了SGBM/Semi-Global Block Matching算法)
     num_disp = 16 * num
     num_disp = ((imgL.shape[1] // 8) + 15) & -16;
-    stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=block_size)
-    # stereo = cv2.StereoSGBM_create(numDisparities=32 * num, blockSize=block_size)
+    # stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=block_size)
+    stereo = cv2.StereoSGBM_create(numDisparities=num_disp, blockSize=block_size,
+                                   disp12MaxDiff=5, preFilterCap=1)
     disparity = stereo.compute(imgL, imgR)
     disp = cv2.normalize(disparity, disparity, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    # cv2.validateDisparity()
 
     # ----- 将图片扩展至3d空间中，其z方向的值则为当前的距离
     # 生成3D点云
