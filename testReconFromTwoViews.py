@@ -987,6 +987,8 @@ def test_pose_from_feature_matching_for_bino():
     matches = bf.knnMatch(descriptors1, descriptors2, k=2)
     matches_rcp = bf.knnMatch(descriptors2, descriptors1, k=2)
 
+    # 统计两帧图特征匹配的最小距离，和最大距离
+
     # 比例滤波器
     def ratio_test(matches):
         """
@@ -994,14 +996,24 @@ def test_pose_from_feature_matching_for_bino():
         :return:
         """
         valid_matches = []
+        min_dist, max_dist = np.inf, -np.inf
         for first, second in matches:  # top1 and top2
+            if first.distance < min_dist:
+                min_dist = first.distance
+            if second.distance > max_dist:
+                max_dist = second.distance
+
             if first.distance < 0.7 * second.distance:
                 valid_matches.append(first)
-        return  valid_matches
+        return  valid_matches, min_dist, max_dist
 
     # ----- Ratio test filter: 设置两距离比值小于0.7时为可用匹配(Lowe's ratio test)
-    valid_matches = ratio_test(matches)
-    valid_matches_rcp = ratio_test(matches_rcp)
+    valid_matches, min_dist_1, max_dist_1 = ratio_test(matches)
+    valid_matches_rcp, min_dist_2, max_dist_2 = ratio_test(matches_rcp)
+    min_dist = min(min_dist_1, min_dist_2)
+    max_dist = max(max_dist_1, max_dist_2)
+    print('Min distance: {:.3f}'.format(min_dist))
+    print('Max distance: {:.3f}\n'.format(max_dist))
 
     # ----- Reciprocity filter: 互惠滤波器滤波
     matches_rcp_filter = []
@@ -1016,6 +1028,13 @@ def test_pose_from_feature_matching_for_bino():
         if found:
             continue
     valid_matches = matches_rcp_filter
+
+    # 特征距离约束
+    tmp_matches = []
+    for match in valid_matches:
+        if match.distance < 12.0 * min_dist:
+            tmp_matches.append(match)
+    valid_matches = tmp_matches
 
     # ----- 应用对极几何约束滤波
     if len(valid_matches) >= 10:
@@ -1035,14 +1054,13 @@ def test_pose_from_feature_matching_for_bino():
         print("not have enough matches!")
         return
 
-
-    # # 可视化特征点匹配
-    # good_matches = np.expand_dims(good_matches, 0)
-    # img_feat_match = cv2.drawMatchesKnn(img1_undistort, kpts1, img2_undistort, kpts2, good_matches[:15], None, flags=2)
-    # win_name = 'Feature matching'
-    # cv2.imshow(win_name, img_feat_match)
-    # cv2.waitKey()
-    # cv2.destroyWindow('Feature matching')
+    # 可视化特征点匹配
+    good_matches = np.expand_dims(good_matches, 0)
+    img_feat_match = cv2.drawMatchesKnn(img1_undistort, kpts1, img2_undistort, kpts2, good_matches[:15], None, flags=2)
+    win_name = 'Feature matching'
+    cv2.imshow(win_name, img_feat_match)
+    cv2.waitKey()
+    cv2.destroyWindow('Feature matching')
 
     good_matches = np.squeeze(good_matches)
     p1 = np.asarray([kpts1[m.queryIdx].pt for m in good_matches])  # queryIndex 查询图像中描述符的索引

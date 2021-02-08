@@ -48,6 +48,7 @@ while True:
     cv2.imshow("gray2", imgR)
     # cv2.waitKey(1000)
     # cv2.destroyAllWindows()
+    img_channels = 1
 
     # 两个track bar用来调节不同的参数查看效果
     num = cv2.getTrackbarPos("num", "depth")
@@ -64,8 +65,16 @@ while True:
     num_disp = 16 * num
     num_disp = ((imgL.shape[1] // 8) + 15) & -16;
     # stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=block_size)
-    stereo = cv2.StereoSGBM_create(numDisparities=num_disp, blockSize=block_size,
-                                   disp12MaxDiff=5, preFilterCap=1)
+    stereo = cv2.StereoSGBM_create(numDisparities=num_disp,
+                                   blockSize=block_size,
+                                   disp12MaxDiff=-1,
+                                   preFilterCap=1,
+                                   P1=8 * img_channels * block_size * block_size,
+                                   P2=32 * img_channels * block_size * block_size,
+                                   uniquenessRatio=10,
+                                   speckleWindowSize=100,
+                                   speckleRange=100,
+                                   mode=cv2.STEREO_SGBM_MODE_HH)
     disparity = stereo.compute(imgL, imgR)
     disp = cv2.normalize(disparity, disparity, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
     # cv2.validateDisparity()
@@ -82,7 +91,7 @@ while True:
 
     # ----- 测距: 随机输出一些距离
     num_pts = pts3d.shape[0]
-    rand_pt_inds = [np.random.randint(int(0.3*num_pts), int(0.7*num_pts)) for i in range(5)]
+    rand_pt_inds = [np.random.randint(int(0.3 * num_pts), int(0.7 * num_pts)) for i in range(5)]
     dists = pts3d[rand_pt_inds][:, 2]
     print('Measured distance: {:.5f}m'.format(dists[np.random.randint(0, 5)]))
 
