@@ -106,7 +106,7 @@
       <workItem from="1612514335492" duration="3069000" />
       <workItem from="1612662793240" duration="1677000" />
       <workItem from="1612679341175" duration="801000" />
-      <workItem from="1612746256658" duration="3048000" />
+      <workItem from="1612746256658" duration="3688000" />
     </task>
     <task id="LOCAL-00001" summary="Refactor.">
       <created>1611727451444</created>
@@ -220,7 +220,14 @@
       <option name="project" value="LOCAL" />
       <updated>1612765727737</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Add distance filter.">
+      <created>1612766081779</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1612766081779</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -235,10 +242,10 @@
     <option name="LAST_COMMIT_MESSAGE" value="Add distance filter." />
   </component>
   <component name="WindowStateProjectService">
-    <state x="462" y="96" key="CommitChangelistDialog2" timestamp="1612765726652">
+    <state x="462" y="96" key="CommitChangelistDialog2" timestamp="1612766081137">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="462" y="96" key="CommitChangelistDialog2/0.0.1920.1050@0.0.1920.1050" timestamp="1612765726652" />
+    <state x="462" y="96" key="CommitChangelistDialog2/0.0.1920.1050@0.0.1920.1050" timestamp="1612766081137" />
     <state width="1759" height="466" key="DebuggerActiveHint" timestamp="1612410606652">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
@@ -279,10 +286,10 @@
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
     <state x="367" y="171" key="SettingsEditor/0.0.1920.1050@0.0.1920.1050" timestamp="1611285738931" />
-    <state x="545" y="264" key="Vcs.Push.Dialog.v2" timestamp="1612765729909">
+    <state x="545" y="264" key="Vcs.Push.Dialog.v2" timestamp="1612766164445">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="545" y="264" key="Vcs.Push.Dialog.v2/0.0.1920.1050@0.0.1920.1050" timestamp="1612765729909" />
+    <state x="545" y="264" key="Vcs.Push.Dialog.v2/0.0.1920.1050@0.0.1920.1050" timestamp="1612766164445" />
     <state width="649" height="528" key="XDebugger.FullValuePopup" timestamp="1612409806887">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
