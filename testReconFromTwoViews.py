@@ -1029,7 +1029,7 @@ def test_pose_from_feature_matching_for_bino():
             continue
     valid_matches = matches_rcp_filter
 
-    # 特征距离约束
+    # Distance filter: 特征距离约束
     tmp_matches = []
     for match in valid_matches:
         if match.distance < 12.0 * min_dist:
@@ -1201,7 +1201,7 @@ def test_pose_from_feature_matching_for_bino():
             good_flags[i] = True
             # print('Epi-polar constraint residual error: {:.6f}'.format(np.abs(np.squeeze(ep_res))))
         else:
-            print('Epi-polar constraint residual error is great!')
+            # print('Epi-polar constraint residual error is great!')
             pass
     good_flags = np.array(good_flags, dtype=np.bool)
 
