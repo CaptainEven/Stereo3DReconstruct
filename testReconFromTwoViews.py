@@ -1140,7 +1140,10 @@ def test_pose_from_feature_matching_for_bino():
     ind = 0
     max_res = 0.0
     for i in range(4):
-        pts3d, pts3d_homo = my_triangulate(np.dot(K1, P1), np.dot(K2, P2[i]), x1, x2)  # 3D points
+        ## 三角测量获取空间3D点坐标: 3D points
+        pts3d, pts3d_homo = my_triangulate(np.dot(K1, P1), np.dot(K2, P2[i]), x1, x2)
+
+        ## 空间3D点投影到归一化相机平面获取深度
         depth_1 = np.dot(P1, pts3d_homo.T)[2]
         depth_2 = np.dot(P2[i], pts3d_homo.T)[2]
 
