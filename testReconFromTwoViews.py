@@ -948,8 +948,8 @@ def test_pose_from_feature_matching_for_bino():
     :return:
     """
     # 读取原图
-    frame1 = cv2.imread("./img/01.bmp")
-    frame2 = cv2.imread("./img/02.bmp")
+    frame1 = cv2.imread("./img/01.bmp")  # "./img/01.bmp"
+    frame2 = cv2.imread("./img/02.bmp")  # "./img/02.bmp"
 
     # 畸变矫正
     img1_undistort = cv2.undistort(frame1,
