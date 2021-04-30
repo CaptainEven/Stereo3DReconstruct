@@ -197,8 +197,8 @@ def test_kitti():
     """
     :return:
     """
-    left = cv2.imread("./img/left_10.png")  # "./img/01.bmp"
-    right = cv2.imread("./img/right_10.png")  # "./img/02.bmp"
+    left = cv2.imread("./img/left_200.jpg")  # "./img/01.bmp"
+    right = cv2.imread("./img/right_200.jpg")  # "./img/02.bmp"
 
     # 将图片置为灰度图，为StereoBM作准备
     imgL = cv2.cvtColor(left, cv2.COLOR_BGR2GRAY)
@@ -239,9 +239,15 @@ def test_kitti():
     # cv2.validateDisparity()
     # cv2.waitKey()
 
+    ## 超参数: 用于点云截取
+    MAX_DEPTH = 80.0
+    MAX_HEIGHT = 1.5
+
     # KITTI数据集参数
-    f = 721  # pixel
     b = 0.54  # m
+    f = 718.335  # pixel
+    cx = 609.5593  # pixel
+    cy = 172.8540  # pixel
 
     # ## xiaomi参数
     # f = (998.72290039062500 + 1000.0239868164063) * 0.5  # 1000.0
@@ -258,6 +264,13 @@ def test_kitti():
 
     # ---------- 视差图(uint16)——>深度图(float32)
     depth = disp2depth(b, f, disparity)
+
+    # ---------- 深度图滤波
+    mask = depth > 0.0
+    depth = depth * mask
+    mask = depth < MAX_DEPTH
+    depth = depth * mask
+    print('Max depth: {:.3f}m.'.format(np.max(depth)))
 
     # --------- 深度图——>点云x, y, z
     points = np.zeros((H, W, 3), dtype=np.float32)
@@ -281,13 +294,24 @@ def test_kitti():
     points = points[inds]
     colors = colors[inds]
 
+    # ----- 过滤掉
+    inds = np.where(
+        (points[:, 1] < MAX_HEIGHT)
+        & (points[:, 1] > -MAX_HEIGHT)
+    )
+    points = points[inds]
+    colors = colors[inds]
+    print('{:d} 3D points left.'.format(inds[0].size))
+
     # 保存pcd点云文件
-    points2pcd(points, './pc_10.pcd')
-    print('PCD poind cloud saved.')
+    pc_path = './pc_200.pcd'
+    points2pcd(points, pc_path)
+    print('PCD poind cloud {:s} saved.'.format(pc_path))
 
     # 保存ply点云文件
-    points2ply(points, colors, './ply_10.ply')
-    print('Ply poind cloud saved.')
+    ply_path = './ply_200.ply'
+    points2ply(points, colors, ply_path)
+    print('Ply poind cloud {:s} saved.'.format(ply_path))
 
 
 if __name__ == '__main__':
