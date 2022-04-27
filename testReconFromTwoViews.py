@@ -386,12 +386,12 @@ def twoviews_recon():
 
     # 畸变矫正
     img1_undistort = cv2.undistort(frame1,
-                                   camera_configs.left_camera_matrix,
-                                   camera_configs.left_distortion)
+                                   camera_configs.K1,
+                                   camera_configs.distort1)
 
     img2_undistort = cv2.undistort(frame2,
-                                   camera_configs.right_camera_matrix,
-                                   camera_configs.right_distortion)
+                                   camera_configs.K2,
+                                   camera_configs.distort2)
 
     img1_undistort_gray = cv2.cvtColor(img1_undistort, cv2.COLOR_BGR2GRAY)
     img2_undistort_gray = cv2.cvtColor(img2_undistort, cv2.COLOR_BGR2GRAY)
@@ -457,8 +457,8 @@ def twoviews_recon():
     p2 = np.asarray([kpts2[m.trainIdx].pt for m in good_matches])
     # # -----
 
-    pts3d = reconFrom2Views(K1=camera_configs.left_camera_matrix,
-                            K2=camera_configs.right_camera_matrix,
+    pts3d = reconFrom2Views(K1=camera_configs.K1,
+                            K2=camera_configs.K2,
                             R1=np.eye(3, 3, dtype=np.float32),
                             T1=np.zeros((3, 1), dtype=np.float32),
                             R2=camera_configs.R,
@@ -472,8 +472,8 @@ def twoviews_recon():
     print('Some good Pts3D(m):\n', good_3d_pts[:5], '\n Remain total {} good 3D points.'.format(len(good_3d_pts)))
 
     ## ---------- 验证投影3D ——> 2D
-    K1 = camera_configs.left_camera_matrix
-    K2 = camera_configs.right_camera_matrix
+    K1 = camera_configs.K1
+    K2 = camera_configs.K2
     R1 = np.eye(3, 3, dtype=np.float32)
     T1 = np.zeros((3, 1), dtype=np.float32)
     R2 = camera_configs.R
@@ -482,11 +482,11 @@ def twoviews_recon():
     err_sum_my, err_sum_cv = 0.0, 0.0
     for pt2d_1, pt2d_2, pt3d in zip(p1, p2, pts3d):
         ## ----- left frame's re-projection error
-        err_my_1 = my_reproj_err(K1, R1, T1, pt3d, pt2d_1, camera_configs.left_distortion)
+        err_my_1 = my_reproj_err(K1, R1, T1, pt3d, pt2d_1, camera_configs.distort1)
         err_cv_1 = cv_reproj_err(K1, R1, T1, pt3d, pt2d_1)
 
         ## ----- right frame's re-projection error
-        err_my_2 = my_reproj_err(K2, R2, T2, pt3d, pt2d_2, camera_configs.right_distortion)
+        err_my_2 = my_reproj_err(K2, R2, T2, pt3d, pt2d_2, camera_configs.distort2)
         err_cv_2 = cv_reproj_err(K2, R2, T2, pt3d, pt2d_2)
 
         err_mean_my = np.mean(np.array([err_my_1, err_my_2]))
@@ -513,12 +513,12 @@ def my_recon_twoviews():
 
     # 畸变矫正
     img1_undistort = cv2.undistort(frame1,
-                                   camera_configs.left_camera_matrix,
-                                   camera_configs.left_distortion)
+                                   camera_configs.K1,
+                                   camera_configs.distort1)
 
     img2_undistort = cv2.undistort(frame2,
-                                   camera_configs.right_camera_matrix,
-                                   camera_configs.right_distortion)
+                                   camera_configs.K2,
+                                   camera_configs.distort2)
 
     # # 选取左右视图关键点
     # p1 = np.array([[199, 74], [335, 74], [337, 257], [200, 259]], dtype=np.float32)
@@ -591,8 +591,8 @@ def my_recon_twoviews():
     #                         p1=p1,
     #                         p2=p2)
 
-    K1 = camera_configs.left_camera_matrix
-    K2 = camera_configs.right_camera_matrix
+    K1 = camera_configs.K1
+    K2 = camera_configs.K2
     R1 = np.eye(3, 3, dtype=np.float32)
     T1 = np.zeros((3, 1), dtype=np.float32)
     R2 = camera_configs.R
@@ -866,8 +866,8 @@ def test_verify_P1P2():
     P2_guess[0:3, 0:3] = np.float32(camera_configs.R2)  # R2
     P2_guess[:, 3] = np.float32(camera_configs.T).T  # T2
 
-    fk1 = np.float32(camera_configs.left_camera_matrix)
-    fk2 = np.float32(camera_configs.right_camera_matrix)
+    fk1 = np.float32(camera_configs.K1)
+    fk2 = np.float32(camera_configs.K2)
 
     P1_guess = np.dot(fk1, P1_guess)
     P2_guess = np.dot(fk2, P2_guess)
@@ -956,12 +956,12 @@ def test_pose_from_feature_matching_for_bino():
 
     # 畸变矫正
     img1_undistort = cv2.undistort(frame1,
-                                   camera_configs.left_camera_matrix,
-                                   camera_configs.left_distortion)
+                                   camera_configs.K1,
+                                   camera_configs.distort1)
 
     img2_undistort = cv2.undistort(frame2,
-                                   camera_configs.right_camera_matrix,
-                                   camera_configs.right_distortion)
+                                   camera_configs.K2,
+                                   camera_configs.distort2)
 
     # # 选取左右视图关键点
     # p1 = np.array([[199, 74], [335, 74], [337, 257], [200, 259]], dtype=np.float32)
@@ -1073,8 +1073,8 @@ def test_pose_from_feature_matching_for_bino():
 
     # ---------- 将2D特征点从像素坐标系投影到相机坐标系
     # 相机内参
-    K1 = camera_configs.left_camera_matrix
-    K2 = camera_configs.right_camera_matrix
+    K1 = camera_configs.K1
+    K2 = camera_configs.K2
 
     # 构造相机坐标系下归一化齐次坐标
     x1 = np.concatenate((p1, np.ones((p1.shape[0], 1), dtype=np.float32)), axis=1)
