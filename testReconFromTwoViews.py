@@ -104,9 +104,9 @@ def undistort_pt2d(fx, fy, cx, cy, k1, k2, pt2d):
     r_square = (u * u) + (v * v)
     r_quadric = r_square * r_square
 
-    # do radial undistortion only
-    uc = x1 / (1.0 + k1 * r_square + k2 * r_quadric)
-    vc = y1 / (1.0 + k1 * r_square + k2 * r_quadric)
+    # do radial un-distortion only
+    uc = u / (1.0 + k1 * r_square + k2 * r_quadric)
+    vc = v / (1.0 + k1 * r_square + k2 * r_quadric)
 
     # convert back to pixel coordinates
     # using nearest neighbor interpolation
@@ -879,6 +879,9 @@ def test_verify_P1P2():
 
 
 def compare_two_recon_methods():
+    """
+    :return:
+    """
     pts3d_bino, p1_bino, p2_bino = bino_recon()
     pts3d_2views, p1_2views, p2_2views = twoviews_recon()
     pts3d_bino_my, p1_bino_my, p2_bino_my = my_recon_bino()
@@ -1401,5 +1404,5 @@ if __name__ == '__main__':
     # bino_recon()
     # twoviews_recon()
     # test_verify_P1P2()
-    # compare_two_recon_methods()
-    test_pose_from_feature_matching_for_bino()
+    compare_two_recon_methods()
+    # test_pose_from_feature_matching_for_bino()

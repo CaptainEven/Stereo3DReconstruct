@@ -1,3 +1,6 @@
+# encoding=utf-8
+import os
+
 import cv2
 import numpy as np
 
@@ -184,10 +187,10 @@ def disp2depth(b, f, disp):
     :param disp:
     :return:
     """
-    disp = disp.astype(np.float32)
+    disp = disp.astype(np.float64)
     non_zero_inds = np.where(disp)
 
-    depth = np.zeros_like(disp, dtype=np.float32)
+    depth = np.zeros_like(disp, dtype=np.float64)
     depth[non_zero_inds] = b * f / disp[non_zero_inds]
 
     return depth
@@ -197,8 +200,8 @@ def test_kitti():
     """
     :return:
     """
-    left = cv2.imread("./img/left_200.jpg")  # "./img/01.bmp"
-    right = cv2.imread("./img/right_200.jpg")  # "./img/02.bmp"
+    left = cv2.imread("./img/camL_0001_ud_rotate_cw90.jpg")  # "./img/01.bmp"
+    right = cv2.imread("./img/camR_0001_ud_rotate_cw90.jpg")  # "./img/02.bmp"
 
     # 将图片置为灰度图，为StereoBM作准备
     imgL = cv2.cvtColor(left, cv2.COLOR_BGR2GRAY)
@@ -217,12 +220,13 @@ def test_kitti():
         block_size += 1  # odd block size
     if block_size < 5:
         block_size = 5
-    # print('Num: ', num)
-    # print('Block size: ', block_size)
+    print('Num: ', num)
+    print('Block size: ', block_size)
 
     # 根据Block Matching方法生成视差图(opencv里也提供了SGBM/Semi-Global Block Matching算法)
     num_disp = 16 * num
     num_disp = ((imgL.shape[1] // 8) + 15) & -16;
+    print("Num of disp: ", num_disp)
     # stereo = cv2.StereoBM_create(numDisparities=num_disp, blockSize=block_size)
     stereo = cv2.StereoSGBM_create(numDisparities=num_disp,
                                    blockSize=block_size,
@@ -240,29 +244,32 @@ def test_kitti():
     # cv2.waitKey()
 
     ## 超参数: 用于点云截取
-    MAX_DEPTH = 80.0
-    MAX_HEIGHT = 1.5
+    MAX_DEPTH = 20.0
+    MAX_HEIGHT = 5.0
 
-    # KITTI数据集参数
-    b = 0.54  # m
-    f = 718.335  # pixel
-    cx = 609.5593  # pixel
-    cy = 172.8540  # pixel
+    # # KITTI数据集参数
+    # b = 0.54  # m
+    # f = 718.335  # pixel
+    # cx = 609.5593  # pixel
+    # cy = 172.8540  # pixel
 
-    # ## xiaomi参数
-    # f = (998.72290039062500 + 1000.0239868164063) * 0.5  # 1000.0
-    # cx = 671.15643310546875
-    # cy = 384.32458496093750
-    # b = 0.12  # m
+    ## xiaomi参数
+    f = (998.72290039062500 + 1000.0239868164063) * 0.5  # 1000.0
+    # f = 1000.0
+    cx = 671.15643310546875
+    cy = 384.32458496093750
+    b = 0.12  # m
 
     H, W = disparity.shape[:2]
     print('W×H: {:d}×{:d}'.format(W, H))
-    cx, cy = W * 0.5, H * 0.5
+    if cx == 0.0 or cy == 0.0:
+        cx, cy = W * 0.5, H * 0.5
     c, r = np.meshgrid(np.arange(W), np.arange(H))
     # print(c, '\n', r)
     # x, y = np.arange(W), np.arange(H)
 
-    # ---------- 视差图(uint16)——>深度图(float32)
+    # ---------- 视差图(uint16)——>深度图(float64)
+    disparity = disparity / 16.0
     depth = disp2depth(b, f, disparity)
 
     # ---------- 深度图滤波
@@ -270,7 +277,7 @@ def test_kitti():
     depth = depth * mask
     mask = depth < MAX_DEPTH
     depth = depth * mask
-    print('Max depth: {:.3f}m.'.format(np.max(depth)))
+    print('Max depth: {:.5f}m.'.format(np.max(depth)))
 
     # --------- 深度图——>点云x, y, z
     points = np.zeros((H, W, 3), dtype=np.float32)
@@ -288,30 +295,40 @@ def test_kitti():
     colors = colors[inds]
 
     # ----- 过滤掉x, y, z全为0的点
-    inds = np.where((points[:, 0] != 0.0) |
-                    (points[:, 1] != 0.0) |
+    inds = np.where((points[:, 0] != 0.0) &
+                    (points[:, 1] != 0.0) &
                     (points[:, 2] != 0.0))
     points = points[inds]
     colors = colors[inds]
 
-    # ----- 过滤掉
-    inds = np.where(
-        (points[:, 1] < MAX_HEIGHT)
-        & (points[:, 1] > -MAX_HEIGHT)
-    )
-    points = points[inds]
-    colors = colors[inds]
-    print('{:d} 3D points left.'.format(inds[0].size))
+    # # ----- 过滤掉
+    # inds = np.where(
+    #     (points[:, 1] < MAX_HEIGHT)
+    #     & (points[:, 1] > -MAX_HEIGHT)
+    # )
+    # points = points[inds]
+    # colors = colors[inds]
+    print('{:d} 3D points left.'.format(points.shape[0]))
 
     # 保存pcd点云文件
-    pc_path = './pc_200.pcd'
+    pc_path = './pc.pcd'
     points2pcd(points, pc_path)
     print('PCD poind cloud {:s} saved.'.format(pc_path))
 
     # 保存ply点云文件
-    ply_path = './ply_200.ply'
+    ply_path = './ply.ply'
     points2ply(points, colors, ply_path)
     print('Ply poind cloud {:s} saved.'.format(ply_path))
+
+    # ---------- 保存深度图
+    depth *= 1000.0  # m ——> mm
+    depth = depth.astype(np.uint16)
+
+    # f_name = os.path.split("00000_l")
+    f_name = "04_08_2021_02_24_53"
+    depth_save_path = './{:s}_depth.png'.format(f_name)
+    cv2.imwrite(depth_save_path, depth)
+    print('Depth image {:s} written.'.format(depth_save_path))
 
 
 if __name__ == '__main__':

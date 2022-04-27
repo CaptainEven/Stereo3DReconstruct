@@ -39,10 +39,13 @@ size = (512, 384)  # 图像尺寸
 # ----- 进行立体更正
 # P1: 第一台相机矫正后坐标系的投影矩阵
 # P2: 第二台相机矫正后坐标系的投影矩阵
-R1, R2, P1, P2, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(left_camera_matrix, left_distortion,
-                                                                  right_camera_matrix, right_distortion,
+R1, R2, P1, P2, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(left_camera_matrix,
+                                                                  left_distortion,
+                                                                  right_camera_matrix,
+                                                                  right_distortion,
                                                                   size,
-                                                                  R, T)
+                                                                  R,
+                                                                  T)
 
 # 计算更正map
 left_map1, left_map2 = cv2.initUndistortRectifyMap(left_camera_matrix, left_distortion, R1, P1, size, cv2.CV_16SC2)
