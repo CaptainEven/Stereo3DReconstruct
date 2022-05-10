@@ -1,11 +1,13 @@
 # encoding=utf-8
 
-import cv2
 import math
+
+import cv2
 import numpy as np
-import camera_configs
-from scipy.sparse import lil_matrix
 from scipy.optimize import least_squares
+from scipy.sparse import lil_matrix
+
+import camera_configs
 
 
 # # 读取原图
@@ -1011,7 +1013,7 @@ def test_pose_from_feature_matching_for_bino():
 
             if first.distance < 0.7 * second.distance:
                 valid_matches.append(first)
-        return  valid_matches, min_dist, max_dist
+        return valid_matches, min_dist, max_dist
 
     # ----- Ratio test filter: 设置两距离比值小于0.7时为可用匹配(Lowe's ratio test)
     valid_matches, min_dist_1, max_dist_1 = ratio_test(matches)
@@ -1301,19 +1303,19 @@ def test_pose_from_feature_matching_for_bino():
         # 3d pt index for each observation(2d feature point mapping to 3d point)
         pt3d_inds = np.zeros(n_obs, dtype=np.int)
         pt3d_inds[:n_pts] = np.arange(n_pts)
-        pt3d_inds[n_pts: n_pts*2] = np.arange(n_pts)
+        pt3d_inds[n_pts: n_pts * 2] = np.arange(n_pts)
 
         # view id for each pt2d feature point
         pt2d_view_inds = np.zeros(n_obs, dtype=np.int)
         pt2d_view_inds[:n_pts] = 0
         pt2d_view_inds[n_pts: n_pts * 2] = 1
         for i in range(6):  # camera pose: rotations and translations
-            A[2 * obs_inds, pt2d_view_inds * 6 + i] = 1         # x row
-            A[2 * obs_inds + 1, pt2d_view_inds * 6 + i] = 1     # y row
+            A[2 * obs_inds, pt2d_view_inds * 6 + i] = 1  # x row
+            A[2 * obs_inds + 1, pt2d_view_inds * 6 + i] = 1  # y row
 
         for i in range(3):  # 3D points
-            A[2 * obs_inds, 2 * 6 + pt3d_inds * 3 + i] = 1       # x row
-            A[2 * obs_inds + 1, 2 * 6 + pt3d_inds * 3 + i] = 1   # y row
+            A[2 * obs_inds, 2 * 6 + pt3d_inds * 3 + i] = 1  # x row
+            A[2 * obs_inds + 1, 2 * 6 + pt3d_inds * 3 + i] = 1  # y row
 
         return A
 
@@ -1351,9 +1353,9 @@ def test_pose_from_feature_matching_for_bino():
 
     # 更新相机位姿和空间点坐标
     new_params = res.x
-    rots_ = new_params[:2*3].reshape((2, 3))
-    mots_ = new_params[2*3:2*6].reshape((2, 3))
-    pts3d_ = new_params[2*6:].reshape((-1, 3))
+    rots_ = new_params[:2 * 3].reshape((2, 3))
+    mots_ = new_params[2 * 3:2 * 6].reshape((2, 3))
+    pts3d_ = new_params[2 * 6:].reshape((-1, 3))
     R1_, _ = cv2.Rodrigues(rots_[0])  # 旋转向量 ——> 旋转矩阵
     R2_, _ = cv2.Rodrigues(rots_[1])
     T1_ = mots_[0]
