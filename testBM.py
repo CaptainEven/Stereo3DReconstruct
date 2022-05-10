@@ -19,8 +19,14 @@ while True:
     cv2.imshow("img2", img2)
 
     # 根据更正map对图片进行重构
-    img1_rectified = cv2.remap(img1, camera_configs.left_map1, camera_configs.left_map2, cv2.INTER_LINEAR)
-    img2_rectified = cv2.remap(img2, camera_configs.right_map1, camera_configs.right_map2, cv2.INTER_LINEAR)
+    img1_rectified = cv2.remap(img1,
+                               camera_configs.left_map_x,
+                               camera_configs.left_map_y,
+                               cv2.INTER_LINEAR)
+    img2_rectified = cv2.remap(img2,
+                               camera_configs.right_map_x,
+                               camera_configs.right_map_y,
+                               cv2.INTER_LINEAR)
     cv2.imshow("rect1", img1_rectified)
     cv2.imshow("rect2", img2_rectified)
 

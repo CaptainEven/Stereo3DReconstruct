@@ -43,6 +43,7 @@ for fname in images:
     img = cv2.drawChessboardCorners(gray, (8, 6), corners2, ret)
     cv2.imshow('img', img)
     # cv2.waitKey(1000)
+
 '''
 传入所有图片各自角点的三维、二维坐标，相机标定。
 每张图片都有自己的旋转和平移矩阵，但是相机内参和畸变系数只有一组。

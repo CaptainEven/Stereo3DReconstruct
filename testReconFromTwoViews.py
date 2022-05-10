@@ -121,7 +121,7 @@ def undistort_pt2d(fx, fy, cx, cy, k1, k2, pt2d):
 # P1 -x1 0   λ1
 # P2 0 -x2   λ1
 #
-def my_triangulate(P1, P2, p1, p2):
+def triangulateSVD(P1, P2, p1, p2):
     """
     :param P1:  camera matrix 1
     :param P2:  camera matrix 2
@@ -181,7 +181,7 @@ def my_camera_matrix_P(x, X):
     return V[-1, :12].reshape((3, 4))
 
 
-def reconstructFromBino(P1, P2, p1, p2):
+def reconstructStereoCV(P1, P2, p1, p2):
     """
     :param P1:
     :param P2:
@@ -351,6 +351,9 @@ def cv_reproj_err(K, R, T, pt3d, pt2d, distort_coefs=[]):
 
 
 def reconFrom2Views(K1, K2, R1, T1, R2, T2, p1, p2):
+    """
+    @param K1:
+    """
     # 设置两个相机的投影矩阵[R T]，且转为float型数据 triangulatePoints函数只支持float
     P1 = np.zeros((3, 4), dtype=np.float32)
     P2 = np.zeros((3, 4), dtype=np.float32)
@@ -613,7 +616,7 @@ def my_recon_twoviews():
     P2 = np.dot(fk2, P2)
 
     # ----- my implementation of triangulation
-    pts3d, _ = my_triangulate(P1, P2, p1, p2)
+    pts3d, _ = triangulateSVD(P1, P2, p1, p2)
     # -----
 
     print('Total {} 3D points reconstructed.'.format(pts3d.shape[0]))
@@ -633,8 +636,8 @@ def my_recon_bino():
     frame2 = cv2.imread("./img/02.bmp")
 
     # 双目矫正
-    img1_rectified = cv2.remap(frame1, camera_configs.left_map1, camera_configs.left_map2, cv2.INTER_LINEAR)
-    img2_rectified = cv2.remap(frame2, camera_configs.right_map1, camera_configs.right_map2, cv2.INTER_LINEAR)
+    img1_rectified = cv2.remap(frame1, camera_configs.left_map_x, camera_configs.left_map_y, cv2.INTER_LINEAR)
+    img2_rectified = cv2.remap(frame2, camera_configs.right_map_x, camera_configs.right_map_y, cv2.INTER_LINEAR)
 
     # 灰度图
     img1_rectified_gray = cv2.cvtColor(img1_rectified, cv2.COLOR_BGR2GRAY)
@@ -703,7 +706,7 @@ def my_recon_bino():
     # # -----
 
     # pts3d = reconstructFromBino(P1=camera_configs.P1, P2=camera_configs.P2, p1=p1, p2=p2)
-    pts3d, _ = my_triangulate(P1=camera_configs.P1, P2=camera_configs.P2, p1=p1, p2=p2)
+    pts3d, _ = triangulateSVD(P1=camera_configs.P1, P2=camera_configs.P2, p1=p1, p2=p2)
 
     print('Total {} 3D points reconstructed.'.format(pts3d.shape[0]))
     # print('Some Pts3D:\n', pts3d[:5])
@@ -745,8 +748,8 @@ def bino_recon():
     frame2 = cv2.imread("./img/02.bmp")
 
     # 双目矫正
-    img1_rectified = cv2.remap(frame1, camera_configs.left_map1, camera_configs.left_map2, cv2.INTER_LINEAR)
-    img2_rectified = cv2.remap(frame2, camera_configs.right_map1, camera_configs.right_map2, cv2.INTER_LINEAR)
+    img1_rectified = cv2.remap(frame1, camera_configs.left_map_x, camera_configs.left_map_y, cv2.INTER_LINEAR)
+    img2_rectified = cv2.remap(frame2, camera_configs.right_map_x, camera_configs.right_map_y, cv2.INTER_LINEAR)
 
     # 灰度图
     img1_rectified_gray = cv2.cvtColor(img1_rectified, cv2.COLOR_BGR2GRAY)
@@ -814,7 +817,7 @@ def bino_recon():
     p2 = np.asarray([kpts2[m.trainIdx].pt for m in good_matches])
     # # -----
 
-    pts3d = reconstructFromBino(P1=camera_configs.P1, P2=camera_configs.P2, p1=p1, p2=p2)
+    pts3d = reconstructStereoCV(P1=camera_configs.P1, P2=camera_configs.P2, p1=p1, p2=p2)
     print('Total {} 3D points reconstructed.'.format(pts3d.shape[0]))
     # print('Some Pts3D:\n', pts3d[:5])
 
@@ -935,15 +938,15 @@ def compare_two_recon_methods():
         pass
 
 
-def skew(a):
+def skew(m):
     """
     反对称矩阵: 对于任意向量v, 有a×v=Av
-    :param a:
+    :param m:
     :return: A
     """
-    return np.array([[0, -a[2], a[1]],
-                     [a[2], 0, -a[0]],
-                     [-a[1], a[0], 0]])
+    return np.array([[0, -m[2], m[1]],
+                     [m[2], 0, -m[0]],
+                     [-m[1], m[0], 0]])
 
 
 def test_pose_from_feature_matching_for_bino():
@@ -1144,7 +1147,7 @@ def test_pose_from_feature_matching_for_bino():
     max_res = 0.0
     for i in range(4):
         ## 三角测量获取空间3D点坐标: 3D points
-        pts3d, pts3d_homo = my_triangulate(np.dot(K1, P1), np.dot(K2, P2[i]), x1, x2)
+        pts3d, pts3d_homo = triangulateSVD(np.dot(K1, P1), np.dot(K2, P2[i]), x1, x2)
 
         ## 空间3D点投影到归一化相机平面获取深度
         depth_1 = np.dot(P1, pts3d_homo.T)[2]

@@ -229,9 +229,17 @@ class Ui_Dialog_count(object):
         # 打开图像
         frame1 = cv2.imread(self.imgName)
         frame2 = cv2.imread(self.imgName2)
+
         # 根据打开的图像和相机参数更正map对图片进行重构
-        self.img1_rectified = cv2.remap(frame1, camera_configs.left_map1, camera_configs.left_map2, cv2.INTER_LINEAR)
-        self.img2_rectified = cv2.remap(frame2, camera_configs.right_map1, camera_configs.right_map2, cv2.INTER_LINEAR)
+        self.img1_rectified = cv2.remap(frame1,
+                                        camera_configs.left_map_x,
+                                        camera_configs.left_map_y,
+                                        cv2.INTER_LINEAR)
+        self.img2_rectified = cv2.remap(frame2,
+                                        camera_configs.right_map_x,
+                                        camera_configs.right_map_y,
+                                        cv2.INTER_LINEAR)
+
         self.QtImg1 = QtGui.QImage(self.img1_rectified.data,
                                    self.img1_rectified.shape[1],
                                    self.img1_rectified.shape[0],

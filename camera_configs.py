@@ -53,6 +53,6 @@ R1, R2, P1, P2, Q, validPixROI1, validPixROI2 = cv2.stereoRectify(K1,
                                                                   T)
 
 # 计算更正map
-left_map1, left_map2 = cv2.initUndistortRectifyMap(K1, distort1, R1, P1, size, cv2.CV_16SC2)
-right_map1, right_map2 = cv2.initUndistortRectifyMap(K2, distort2, R2, P2, size, cv2.CV_16SC2)
+left_map_x, left_map_y = cv2.initUndistortRectifyMap(K1, distort1, R1, P1, size, cv2.CV_16SC2)
+right_map_x, right_map_y = cv2.initUndistortRectifyMap(K2, distort2, R2, P2, size, cv2.CV_16SC2)
 print("[Info]: stereo rectifying done.")
